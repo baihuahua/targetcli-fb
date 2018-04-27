@@ -635,9 +635,9 @@ class UIUserBackedBackstore(UIBackstore):
 
         config = self.handler + "/" + cfgstring
 
-        ok, errmsg = self.iface.CheckConfig('(s)', config)
+        ok = self.iface.CheckConfig('(s)', config)
         if not ok:
-            raise ExecutionError("cfgstring invalid: %s" % errmsg)
+            raise ExecutionError("cfgstring invalid.")
 
         try:
             so = UserBackedStorageObject(name, size=size, config=config,
@@ -645,11 +645,22 @@ class UIUserBackedBackstore(UIBackstore):
         except:
             raise ExecutionError("UserBackedStorageObject creation failed.")
 
+        ok = self.iface.OpenDevice('(s)', config)
+        if not ok:
+            raise ExecutionError("open UIO device failed.")
+
         ui_so = UIUserBackedStorageObject(so, self)
         self.shell.log.info("Created user-backed storage object %s size %d."
                             % (name, size))
         return self.new_node(ui_so)
 
+    def ui_command_delete(self, name):
+
+        ok = self.iface.CloseDevice('(s)', name)
+        if not ok:
+            raise ExecutionError("close UIO device failed.")
+
+        UIBackstore.ui_command_delete(self, name)
 
 class UIStorageObject(UIRTSLibNode):
     '''
